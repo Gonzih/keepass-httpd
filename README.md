@@ -10,7 +10,7 @@
 go get github.com/Gonzih/keepass-httpd
 ```
 
-### Usage:
+### Usage
 
 ```
 $ keepass-httpd --keepass-file /path/to/file.kdbx --keepass-password mysecret
