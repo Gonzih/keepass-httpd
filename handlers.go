@@ -34,6 +34,12 @@ func marshalEntry(entry *gokeepasslib.Entry) ([]byte, error) {
 	return json.Marshal(&response)
 }
 
+func findEntry(values map[string]string) (*gokeepasslib.Entry, error) {
+	sharedGroupLock.RLock()
+	defer sharedGroupLock.RUnlock()
+	return findInGroupByValues(&sharedGroup, values)
+}
+
 func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	username := r.FormValue("username")
 	title := r.FormValue("title")

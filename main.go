@@ -9,7 +9,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tobischo/gokeepasslib"
 )
 
 func initViper() {
@@ -51,10 +50,4 @@ func respondWithError(w http.ResponseWriter, err error, status int) {
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(json)
-}
-
-func findEntry(values map[string]string) (*gokeepasslib.Entry, error) {
-	sharedGroupLock.RLock()
-	defer sharedGroupLock.RUnlock()
-	return findInGroupByValues(&sharedGroup, values)
 }
