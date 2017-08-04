@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"sync"
 
@@ -10,8 +9,8 @@ import (
 	"github.com/tobischo/gokeepasslib"
 )
 
-var sharedGroup gokeepasslib.Group
-var sharedGroupLock sync.RWMutex
+var sharedRoot *gokeepasslib.RootData
+var sharedRootLock sync.RWMutex
 
 func GetUserName(entry *gokeepasslib.Entry) string {
 	return entry.Get("UserName").Value.Content
@@ -45,13 +44,28 @@ func findInGroupByValues(group *gokeepasslib.Group, values map[string]string) (*
 	return nil, errors.New("Entry not found")
 }
 
+func findInRootByValues(root *gokeepasslib.RootData, values map[string]string) (*gokeepasslib.Entry, error) {
+	sharedRootLock.RLock()
+	defer sharedRootLock.RUnlock()
+
+	for _, innerGroup := range root.Groups {
+		entry, err := findInGroupByValues(&innerGroup, values)
+
+		if err == nil {
+			return entry, err
+		}
+	}
+
+	return nil, errors.New("Entry not found")
+}
+
 func loadDB(password string) error {
 	path := viper.GetString("keepass-file")
 	file, err := os.Open(path)
 	defer file.Close()
 
 	if err != nil {
-		return fmt.Errorf("Error while opening \"%s\": %s", path, err)
+		return err
 	}
 
 	db := gokeepasslib.NewDatabase()
@@ -64,9 +78,9 @@ func loadDB(password string) error {
 
 	db.UnlockProtectedEntries()
 
-	sharedGroupLock.Lock()
-	defer sharedGroupLock.Unlock()
-	sharedGroup = db.Content.Root.Groups[0]
+	sharedRootLock.Lock()
+	defer sharedRootLock.Unlock()
+	sharedRoot = db.Content.Root
 
 	return nil
 }
