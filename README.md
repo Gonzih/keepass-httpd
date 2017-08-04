@@ -1,4 +1,4 @@
-# Keepass-HTTPD
+# Keepass-HTTPD [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/Gonzih/keepass-httpd/blob/master/LICENSE.md)
 
 ## Serve your keepass file via http api
 
