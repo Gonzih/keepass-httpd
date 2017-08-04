@@ -76,13 +76,18 @@ var sharedGroup gokeepasslib.Group
 var sharedGroupLock sync.RWMutex
 
 func loadDB() error {
-	file, _ := os.Open("test.kdbx")
+	path := viper.GetString("keepass-file")
+	file, err := os.Open(path)
 	defer file.Close()
+
+	if err != nil {
+		return fmt.Errorf("Error while opening \"%s\": %s", path, err)
+	}
 
 	db := gokeepasslib.NewDatabase()
 	pass := viper.GetString("keepass-password")
 	db.Credentials = gokeepasslib.NewPasswordCredentials(pass)
-	err := gokeepasslib.NewDecoder(file).Decode(db)
+	err = gokeepasslib.NewDecoder(file).Decode(db)
 
 	if err != nil {
 		return err
@@ -99,6 +104,7 @@ func loadDB() error {
 
 func initViper() {
 	pflag.String("keepass-password", "", "KeepassDB password")
+	pflag.String("keepass-file", "", "KeepassDB file path")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
