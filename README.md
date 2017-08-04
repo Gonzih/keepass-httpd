@@ -19,7 +19,7 @@ $ keepass-httpd --keepass-file /path/to/file.kdbx --http-port 8080
 
 Currently you always have to initialize db via http call
 ```bash
-$ curl "http://localhost:8080/reload?password=mysecret"
+$ curl --form "password=mysecret" "http://localhost:8080/reload"
 > {"status":"success"}
 ```
 
@@ -32,7 +32,7 @@ $ curl "http://localhost:8080/search?title=entrytitle&url=url.com&username=myuse
 
 Re-read DB file from the disk to memory
 ```bash
-$ curl "http://localhost:8080/reload?password=mysecret"
+$ curl --form "password=mysecret" "http://localhost:8080/reload"
 > {"status":"success"}
 ```
 
