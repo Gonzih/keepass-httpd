@@ -97,7 +97,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	username := r.FormValue("username")
 
 	if len(username) == 0 {
-		respondWithError(w, errors.New("Username parameter is required"))
+		respondWithError(w, errors.New("username parameter is required"))
 		return
 	}
 
