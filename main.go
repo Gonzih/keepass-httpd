@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/tobischo/gokeepasslib"
@@ -18,8 +19,12 @@ type responseEntry struct {
 	Password string `json:"password"`
 }
 
-type errorResponseEntry struct {
+type errorResponse struct {
 	Error string `json:"error"`
+}
+
+type successResponse struct {
+	Status string `json:"status"`
 }
 
 func GetUserName(entry *gokeepasslib.Entry) string {
@@ -54,34 +59,48 @@ func marshalEntry(entry *gokeepasslib.Entry) ([]byte, error) {
 }
 
 var sharedGroup gokeepasslib.Group
+var sharedGroupLock sync.RWMutex
 
-func loadDB() {
+func loadDB() error {
 	file, _ := os.Open("test.kdbx")
 	defer file.Close()
 
 	db := gokeepasslib.NewDatabase()
 	db.Credentials = gokeepasslib.NewPasswordCredentials("test")
-	_ = gokeepasslib.NewDecoder(file).Decode(db)
+	err := gokeepasslib.NewDecoder(file).Decode(db)
+
+	if err != nil {
+		return err
+	}
 
 	db.UnlockProtectedEntries()
 
+	sharedGroupLock.Lock()
+	defer sharedGroupLock.Unlock()
 	sharedGroup = db.Content.Root.Groups[0]
+
+	return nil
 }
 
 func init() {
-	loadDB()
+	err := loadDB()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
 	router := httprouter.New()
 
 	router.GET("/search", SearchHandler)
+	router.POST("/reload", ReloadHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func respondWithError(w http.ResponseWriter, err error) {
-	response := errorResponseEntry{Error: err.Error()}
+func respondWithError(w http.ResponseWriter, err error, status int) {
+	response := errorResponse{Error: err.Error()}
 	json, err := json.Marshal(&response)
 
 	if err != nil {
@@ -89,29 +108,56 @@ func respondWithError(w http.ResponseWriter, err error) {
 		return
 	}
 
+	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(json)
+}
+
+func findEntryByUsername(username string) (*gokeepasslib.Entry, error) {
+	sharedGroupLock.RLock()
+	defer sharedGroupLock.RUnlock()
+	return findInGroupByUserName(&sharedGroup, username)
 }
 
 func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	username := r.FormValue("username")
 
 	if len(username) == 0 {
-		respondWithError(w, errors.New("username parameter is required"))
+		respondWithError(w, errors.New("username parameter is required"), http.StatusBadRequest)
 		return
 	}
 
-	entry, err := findInGroupByUserName(&sharedGroup, username)
+	entry, err := findEntryByUsername(username)
 
 	if err != nil {
-		respondWithError(w, err)
+		respondWithError(w, err, http.StatusNotFound)
 		return
 	}
 
 	json, err := marshalEntry(entry)
 
 	if err != nil {
-		respondWithError(w, err)
+		respondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
+}
+
+func ReloadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	err := loadDB()
+
+	if err != nil {
+		respondWithError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	response := successResponse{Status: "success"}
+	json, err := json.Marshal(&response)
+
+	if err != nil {
+		respondWithError(w, err, http.StatusInternalServerError)
 		return
 	}
 
