@@ -14,6 +14,7 @@ import (
 func initViper() {
 	pflag.String("keepass-password", "", "KeepassDB password")
 	pflag.String("keepass-file", "", "KeepassDB file path")
+	pflag.Int("http-port", 8080, "Port to listen on")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
@@ -35,7 +36,8 @@ func main() {
 	router.GET("/search", SearchHandler)
 	router.POST("/reload", ReloadHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	addr := fmt.Sprintf(":%d", viper.GetInt("http-port"))
+	log.Fatal(http.ListenAndServe(addr, router))
 }
 
 func respondWithError(w http.ResponseWriter, err error, status int) {
