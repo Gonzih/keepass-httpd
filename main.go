@@ -36,15 +36,21 @@ func GetURL(entry *gokeepasslib.Entry) string {
 	return entry.Get("URL").Value.Content
 }
 
-func findInGroupByValue(group *gokeepasslib.Group, key, value string) (*gokeepasslib.Entry, error) {
+func findInGroupByValues(group *gokeepasslib.Group, values map[string]string) (*gokeepasslib.Entry, error) {
 	for _, entry := range group.Entries {
-		if value == entry.Get(key).Value.Content {
+		match := true
+
+		for key, value := range values {
+			match = match && entry.Get(key).Value.Content == value
+		}
+
+		if match {
 			return &entry, nil
 		}
 	}
 
 	for _, innerGroup := range group.Groups {
-		entry, err := findInGroupByValue(&innerGroup, key, value)
+		entry, err := findInGroupByValues(&innerGroup, values)
 
 		if err == nil {
 			return entry, err
@@ -119,14 +125,13 @@ func respondWithError(w http.ResponseWriter, err error, status int) {
 	w.Write(json)
 }
 
-func findEntry(key, value string) (*gokeepasslib.Entry, error) {
+func findEntry(values map[string]string) (*gokeepasslib.Entry, error) {
 	sharedGroupLock.RLock()
 	defer sharedGroupLock.RUnlock()
-	return findInGroupByValue(&sharedGroup, key, value)
+	return findInGroupByValues(&sharedGroup, values)
 }
 
 func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var searchKey, searchValue string
 	username := r.FormValue("username")
 	title := r.FormValue("title")
 	url := r.FormValue("url")
@@ -136,18 +141,19 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		return
 	}
 
+	searchValues := make(map[string]string)
+
 	if len(username) > 0 {
-		searchKey = "UserName"
-		searchValue = username
-	} else if len(title) > 0 {
-		searchKey = "Title"
-		searchValue = title
-	} else if len(url) > 0 {
-		searchKey = "URL"
-		searchValue = url
+		searchValues["UserName"] = username
+	}
+	if len(title) > 0 {
+		searchValues["Title"] = title
+	}
+	if len(url) > 0 {
+		searchValues["URL"] = url
 	}
 
-	entry, err := findEntry(searchKey, searchValue)
+	entry, err := findEntry(searchValues)
 
 	if err != nil {
 		respondWithError(w, err, http.StatusNotFound)
