@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright © `2013-2016` `Max Gonzih gonzih @ gmail.com`
+Copyright © `2017` `Max Gonzih gonzih @ gmail.com`
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
