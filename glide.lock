@@ -1,0 +1,10 @@
+hash: 5110d5d77f7965bf807bb98e24d30528e20d79d6bfbbba9029912eb414d60bb4
+updated: 2017-08-04T09:25:10.916851307+02:00
+imports:
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/spf13/viper
+  version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
+- name: github.com/tobischo/gokeepasslib
+  version: 2c5c862670c1c5117739022c7b4ff231b3915bef
+testImports: []

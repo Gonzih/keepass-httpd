@@ -1,0 +1,6 @@
+package: .
+import:
+- package: github.com/tobischo/gokeepasslib
+- package: github.com/spf13/viper
+- package: github.com/julienschmidt/httprouter
+  version: ^1.1.0
