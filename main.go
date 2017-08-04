@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/tobischo/gokeepasslib"
 )
 
@@ -78,7 +80,8 @@ func loadDB() error {
 	defer file.Close()
 
 	db := gokeepasslib.NewDatabase()
-	db.Credentials = gokeepasslib.NewPasswordCredentials("test")
+	pass := viper.GetString("keepass-password")
+	db.Credentials = gokeepasslib.NewPasswordCredentials(pass)
 	err := gokeepasslib.NewDecoder(file).Decode(db)
 
 	if err != nil {
@@ -94,7 +97,16 @@ func loadDB() error {
 	return nil
 }
 
+func initViper() {
+	pflag.String("keepass-password", "", "KeepassDB password")
+	pflag.Parse()
+
+	viper.BindPFlags(pflag.CommandLine)
+}
+
 func init() {
+	initViper()
+
 	err := loadDB()
 
 	if err != nil {
