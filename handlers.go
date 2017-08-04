@@ -81,7 +81,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 }
 
 func ReloadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	err := loadDB()
+	err := loadDB(r.FormValue("password"))
 
 	if err != nil {
 		respondWithError(w, err, http.StatusInternalServerError)

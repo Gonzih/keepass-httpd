@@ -13,7 +13,11 @@ go get github.com/Gonzih/keepass-httpd
 ### Usage
 
 ```
-$ keepass-httpd --keepass-file /path/to/file.kdbx --keepass-password mysecret
+$ keepass-httpd --keepass-file /path/to/file.kdbx --http-port 8080
+
+# Currently you always have to initialize db via http call
+$ curl "http://localhost:8080/reload?password=mysecret"
+> {"status":"success"}
 ```
 
 ```
@@ -23,7 +27,7 @@ $ curl "http://localhost:8080/search?title=entrytitle&url=url.com&username=myuse
 
 
 # Reloads DB file from the disk to memory
-curl -X POST "http://localhost:8080/reload"
+$ curl "http://localhost:8080/reload?password=mysecret"
 > {"status":"success"}
 ```
 

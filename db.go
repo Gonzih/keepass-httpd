@@ -45,7 +45,7 @@ func findInGroupByValues(group *gokeepasslib.Group, values map[string]string) (*
 	return nil, errors.New("Entry not found")
 }
 
-func loadDB() error {
+func loadDB(password string) error {
 	path := viper.GetString("keepass-file")
 	file, err := os.Open(path)
 	defer file.Close()
@@ -55,8 +55,7 @@ func loadDB() error {
 	}
 
 	db := gokeepasslib.NewDatabase()
-	pass := viper.GetString("keepass-password")
-	db.Credentials = gokeepasslib.NewPasswordCredentials(pass)
+	db.Credentials = gokeepasslib.NewPasswordCredentials(password)
 	err = gokeepasslib.NewDecoder(file).Decode(db)
 
 	if err != nil {
